@@ -1,0 +1,158 @@
+{
+  "name": "postcard",
+  "displayName": "Postcard",
+  "description": "Friendly API testing tool with organized test management",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.105.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "views": {
+      "postcard-explorer": [
+        {
+          "id": "postcard.explorerView",
+          "name": "API Explorer",
+          "when": "true",
+          "icon": "$(list-tree)",
+          "canSelectMany": false
+        }
+      ],
+      "postcard-results": [
+        {
+          "id": "postcard-results.view",
+          "name": "Test Results",
+          "when": "true",
+          "type": "webview",
+          "icon": "$(output)"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "postcard-explorer",
+          "title": "Postcard",
+          "icon": "$(globe)"
+        }
+      ],
+      "panel": [
+        {
+          "id": "postcard-results",
+          "title": "Postcard Results",
+          "icon": "$(output)"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "postcard.addFolder",
+        "title": "Add Folder",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "postcard.addFile",
+        "title": "Add File",
+        "icon": "$(file-add)"
+      },
+      {
+        "command": "postcard.openFolder",
+        "title": "Open Folder"
+      },
+      {
+        "command": "postcard.openFile",
+        "title": "Open File"
+      },
+      {
+        "command": "postcard.deleteItem",
+        "title": "Delete",
+        "icon": "$(remove)"
+      },
+      {
+        "command": "postcard.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "postcard.clearResults",
+        "title": "Clear All Results",
+        "icon": "$(clear-all)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "postcard.addFolder",
+          "when": "view == postcard.explorerView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "postcard.addFile",
+          "when": "view == postcard.explorerView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "postcard.refresh",
+          "when": "view == postcard.explorerView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "postcard.clearResults",
+          "when": "view == postcard.resultsView",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "postcard.addFolder",
+          "when": "view == postcard.explorerView && viewItem == folder",
+          "group": "1_add@1"
+        },
+        {
+          "command": "postcard.addFile",
+          "when": "view == postcard.explorerView && viewItem == folder",
+          "group": "1_add@2"
+        },
+        {
+          "command": "postcard.deleteItem",
+          "when": "view == postcard.explorerView",
+          "group": "9_delete"
+        }
+      ],
+      "view/item/inline": [
+        {
+          "command": "postcard.deleteItem",
+          "when": "view == postcard.explorerView"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.105.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "typescript-eslint": "^8.46.3",
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.3",
+    "ts-loader": "^9.5.4",
+    "webpack": "^5.102.1",
+    "webpack-cli": "^6.0.1",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}

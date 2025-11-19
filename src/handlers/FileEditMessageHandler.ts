@@ -1,8 +1,12 @@
 import * as vscode from 'vscode';
 import { BaseMessageHandler } from './BaseMessageHandler';
 import { FileItem, FolderItem } from '../models/ApiTreeItem';
+import { Logger } from '../utils/Logger';
+import { HttpFileExporter, ExportData } from '../services/HttpFileExporter';
 
 export class FileEditMessageHandler extends BaseMessageHandler<FileItem> {
+    private readonly logger = Logger.create('FileEditMessageHandler');
+
     constructor(
         private currentFile: FileItem,
         onUpdate: (updates: Partial<FileItem>) => Promise<void>,
@@ -137,15 +141,15 @@ export class FileEditMessageHandler extends BaseMessageHandler<FileItem> {
     }
 
     protected async handleDeleteMessage(message: any): Promise<void> {
-        console.log('FileEditMessageHandler: handleDeleteMessage called');
+        this.logger.debug('handleDeleteMessage called');
         if (!this.onDelete) {
-            console.log('FileEditMessageHandler: onDelete callback not configured');
+            this.logger.warn('onDelete callback not configured');
             this.showErrorMessage('Delete functionality not configured');
             return;
         }
 
         try {
-            console.log(`FileEditMessageHandler: Showing confirmation dialog for file "${this.currentFile.name}"`);
+            this.logger.info(`Showing confirmation dialog for file "${this.currentFile.name}"`);
             // Show confirmation dialog in VS Code (not in webview)
             const answer = await vscode.window.showWarningMessage(
                 `Are you sure you want to delete "${this.currentFile.name}"? This action cannot be undone.`,
@@ -155,73 +159,48 @@ export class FileEditMessageHandler extends BaseMessageHandler<FileItem> {
             );
 
             if (answer === 'Yes') {
-                console.log(`FileEditMessageHandler: Calling onDelete for file "${this.currentFile.name}"`);
+                this.logger.info(`Calling onDelete for file "${this.currentFile.name}"`);
                 await this.onDelete();
                 vscode.window.showInformationMessage(`File "${this.currentFile.name}" has been deleted.`);
             } else {
-                console.log('FileEditMessageHandler: Delete cancelled by user');
+                this.logger.debug('Delete cancelled by user');
             }
         } catch (error) {
-            console.log(`FileEditMessageHandler: Delete failed:`, error);
+            this.logger.error('Delete failed', error);
             this.showErrorMessage(`Failed to delete file: ${error}`);
         }
     }
 
     protected async handleExportHttpMessage(message: any): Promise<void> {
         const { method, url, headers, body, name, exportOption } = message;
-        console.log('FileEditMessageHandler: Export process started');
-        console.log('Received data:', { method, url, headers, body, name, exportOption });
+        this.logger.info('Export process started', { name, method, exportOption });
 
-        const headerLines = (headers as { key: string; value: string }[]).map(header => `${header.key}: ${header.value}`).join('\n');
-        const httpContent = `${method} ${url}\n${headerLines}\n\n${body}`;
+        try {
+            // Prepare export data
+            const exportData: ExportData = {
+                name: name || 'untitled',
+                method,
+                url,
+                headers: headers || [],
+                body: body || ''
+            };
 
-        console.log('Generated HTTP content:', httpContent);
-
-        if (exportOption === 'download') {
-            console.log('User selected download option');
-            const defaultUri = vscode.Uri.file(`${require('os').homedir()}/Downloads/${name}.http`);
-            console.log('Default download location:', defaultUri.fsPath);
-
-            vscode.window.showSaveDialog({
-                defaultUri,
-                filters: { 'HTTP Files': ['http'] },
-                saveLabel: 'Export Rest Client .http'
-            }).then(async fileUri => {
-                if (fileUri) {
-                    console.log('Save dialog returned file URI:', fileUri.fsPath);
-                    console.log('Writing file content:', httpContent);
-                    await vscode.workspace.fs.writeFile(fileUri, Buffer.from(httpContent, 'utf8'));
-                    console.log('File written successfully to:', fileUri.fsPath);
-                    vscode.window.showInformationMessage('Rest Client .http file downloaded successfully!');
-                } else {
-                    console.log('Save dialog cancelled');
-                }
-            });
-        } else if (exportOption === 'local-save') {
-            console.log('User selected local save option');
-            const workspaceFolders = vscode.workspace.workspaceFolders;
-            if (workspaceFolders && workspaceFolders.length > 0) {
-                const apitesterFolder = vscode.Uri.joinPath(workspaceFolders[0].uri, '.apitester');
-                const httpFileUri = vscode.Uri.joinPath(apitesterFolder, `${name}.http`);
-
-                console.log('Ensuring .apitester folder exists at:', apitesterFolder.fsPath);
-                console.log('Writing file content:', httpContent);
-                await vscode.workspace.fs.createDirectory(apitesterFolder);
-                await vscode.workspace.fs.writeFile(httpFileUri, Buffer.from(httpContent, 'utf8'));
-                console.log('File written successfully to:', httpFileUri.fsPath);
-
-                console.log('Opening file in editor');
-                const document = await vscode.workspace.openTextDocument(httpFileUri);
-                await vscode.window.showTextDocument(document);
-
-                vscode.window.showInformationMessage(`Rest Client .http file saved to .apitester/${name}.http and opened in the editor.`);
-            } else {
-                console.log('No workspace folder found');
-                vscode.window.showErrorMessage('No workspace folder found to save the .http file.');
+            // Validate export data
+            const validation = HttpFileExporter.validateExportData(exportData);
+            if (!validation.isValid) {
+                this.logger.error('Export validation failed', validation.error);
+                this.showErrorMessage(`Export failed: ${validation.error}`);
+                return;
             }
-        } else {
-            console.log('Invalid export option selected');
+
+            // Perform export based on option
+            const exportOptions = { type: exportOption as 'download' | 'local-save' };
+            await HttpFileExporter.export(exportData, exportOptions);
+            
+            this.logger.info('Export completed successfully');
+        } catch (error) {
+            this.logger.error('Export failed', error);
+            this.showErrorMessage(`Export failed: ${error}`);
         }
-        console.log('Export process completed');
     }
 }

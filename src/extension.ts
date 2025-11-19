@@ -4,10 +4,10 @@ import { ApiStorage } from './storage/ApiStorage';
 import { ApiItem, FolderItem, FileItem } from './models/ApiTreeItem';
 import { FolderEditPanel } from './panels/FolderEditPanel';
 import { FileEditPanel } from './panels/FileEditPanel';
-import { ApiTestResultsProvider, TestResult } from './resultPanels';
-import * as https from 'https';
-import * as http from 'http';
-import { URL } from 'url';
+import { ApiTestResultsProvider } from './resultPanels';
+import { ApiTestRunner } from './services/ApiTestRunner';
+import { HttpFileParser } from './utils/HttpFileParser';
+import { Config } from './config/Constants';
 
 export async function activate(context: vscode.ExtensionContext) {
 	console.log('Postcard extension is now active!');
@@ -29,174 +29,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider(ApiTestResultsProvider.viewType, resultsProvider)
 	);
 
-	// API Testing function
-	async function runApiTest(test: FileItem): Promise<void> {
-		// Focus the results panel
-		ApiTestResultsProvider.createOrShow();
-		
-		try {
-			// Find the folder to get base URL
-			let baseUrl = '';
-			if (test.parentId) {
-				const parent = storage.getItem(test.parentId);
-				if (parent && parent.type === 'folder') {
-					baseUrl = (parent as FolderItem).baseUrl || '';
-				}
-			}
+	// Initialize API test runner
+	const apiTestRunner = new ApiTestRunner(storage, resultsProvider);
 
-			// Construct full URL
-			let fullUrl = test.url;
-			if (baseUrl && !test.url.startsWith('http')) {
-				// Remove trailing slash from base URL and leading slash from test URL
-				const cleanBaseUrl = baseUrl.replace(/\/$/, '');
-				const cleanTestUrl = test.url.replace(/^\//, '');
-				fullUrl = cleanBaseUrl + '/' + cleanTestUrl;
-			}
 
-			if (!fullUrl.startsWith('http')) {
-				throw new Error('Invalid URL. Please provide a full URL or ensure the folder has a base URL.');
-			}
-
-			// Prepare request headers for result
-			const requestHeaders: any = {};
-			if (test.headers) {
-				test.headers.forEach(header => {
-					if (header.enabled && header.key) {
-						requestHeaders[header.key] = header.value;
-					}
-				});
-			}
-
-			// Make HTTP request
-			const startTime = Date.now();
-			const response = await makeHttpRequest(fullUrl, test.method, test.headers, test.body, test.bodyType);
-			const endTime = Date.now();
-			
-			// Create result object
-			const result: TestResult = {
-				testName: test.name,
-				testId: test.id,
-				timestamp: new Date(),
-				url: fullUrl,
-				method: test.method,
-				duration: endTime - startTime,
-				statusCode: response.statusCode,
-				statusMessage: response.statusMessage,
-				requestHeaders,
-				requestBody: (test.bodyType !== 'none' && test.body) ? test.body : undefined,
-				responseHeaders: response.headers,
-				responseBody: response.body
-			};
-
-			// Add result to panel
-			resultsProvider.addResult(result);
-			
-		} catch (error) {
-			// Create error result
-			const result: TestResult = {
-				testName: test.name,
-				testId: test.id,
-				timestamp: new Date(),
-				url: test.url,
-				method: test.method,
-				duration: 0,
-				requestHeaders: {},
-				error: String(error)
-			};
-
-			resultsProvider.addResult(result);
-			vscode.window.showErrorMessage(`Test failed: ${error}`);
-		}
-	}
-
-	// HTTP request function
-	function makeHttpRequest(url: string, method: string, headers: any[], body: string, bodyType: string): Promise<{statusCode: number, statusMessage: string, headers: any, body: string}> {
-		return new Promise((resolve, reject) => {
-			try {
-				const urlObj = new URL(url);
-				const isHttps = urlObj.protocol === 'https:';
-				const httpModule = isHttps ? https : http;
-
-				// Prepare request options
-				const options = {
-					hostname: urlObj.hostname,
-					port: urlObj.port || (isHttps ? 443 : 80),
-					path: urlObj.pathname + urlObj.search,
-					method: method,
-					headers: {} as any
-				};
-
-				// Add headers
-				if (headers) {
-					headers.forEach(header => {
-						if (header.enabled && header.key) {
-							options.headers[header.key] = header.value;
-						}
-					});
-				}
-
-				// Set content length if there's a body
-				if (body && bodyType !== 'none') {
-					options.headers['Content-Length'] = Buffer.byteLength(body);
-					
-					// Set content type if not already set
-					if (!options.headers['Content-Type'] && !options.headers['content-type']) {
-						switch (bodyType) {
-							case 'json':
-								options.headers['Content-Type'] = 'application/json';
-								break;
-							case 'form':
-								options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
-								break;
-							case 'xml':
-								options.headers['Content-Type'] = 'application/xml';
-								break;
-							case 'text':
-								options.headers['Content-Type'] = 'text/plain';
-								break;
-						}
-					}
-				}
-
-				const req = httpModule.request(options, (res) => {
-					let responseBody = '';
-					
-					res.on('data', (chunk) => {
-						responseBody += chunk;
-					});
-					
-					res.on('end', () => {
-						resolve({
-							statusCode: res.statusCode || 0,
-							statusMessage: res.statusMessage || '',
-							headers: res.headers,
-							body: responseBody
-						});
-					});
-				});
-
-				req.on('error', (error) => {
-					reject(error);
-				});
-
-				// Set timeout
-				req.setTimeout(30000, () => {
-					req.destroy();
-					reject(new Error('Request timeout (30s)'));
-				});
-
-				// Write body if present
-				if (body && bodyType !== 'none') {
-					req.write(body);
-				}
-
-				req.end();
-				
-			} catch (error) {
-				reject(error);
-			}
-		});
-	}
 
 	// Register the tree view
 	const treeView = vscode.window.createTreeView('postcard.explorerView', {
@@ -208,7 +44,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	setTimeout(() => {
 		console.log('Refreshing tree view after initialization');
 		treeDataProvider.refresh();
-	}, 100);
+	}, Config.TREE_REFRESH_DELAY);
 
 	// Track current selection
 	let currentSelection: ApiItem | undefined;
@@ -317,7 +153,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			await storage.updateItem(currentFileId, updates);
 			treeDataProvider.refresh();
 		}, async (testData: FileItem) => {
-			await runApiTest(testData);
+			await apiTestRunner.runTest(testData);
 		}, async () => {
 			// Delete the current file
 			const currentFileId = FileEditPanel.currentPanel?.messageHandler.getCurrentFile().id || item.id;
@@ -370,7 +206,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			const content = fileContent.toString();
 
 			// Parse the .http file content
-			const tests = parseHttpFile(content, filePath);
+			const tests = HttpFileParser.parse(content, filePath);
 
 			// Determine parent folder
 			let parentId: string | undefined;
@@ -409,69 +245,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(importHttpCommand);
 
-	// Function to parse .http file content
-	function parseHttpFile(content: string, filePath: string): { name: string; method: string; url: string; headers: { key: string; value: string }[]; body: string }[] {
-		const lines = content.split(/\r?\n/);
-		const tests: { name: string; method: string; url: string; headers: { key: string; value: string }[]; body: string }[] = [];
-		let currentTest: { name: string; method: string; url: string; headers: { key: string; value: string }[]; body: string } | null = null;
-		let inBody = false;
-		let bodyLines: string[] = [];
 
-		for (const line of lines) {
-			const trimmedLine = line.trim();
-			
-			// Check if this is a new HTTP request
-			if (/^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\s+/.test(trimmedLine)) {
-				// Save previous test if it exists
-				if (currentTest) {
-					currentTest.body = bodyLines.join('\n').trim();
-					tests.push(currentTest);
-				}
-				
-				// Start new test
-				const [method, url] = trimmedLine.split(/\s+/, 2);
-				const fileName = filePath.split(/\\|\//).pop()?.split('.')[0] || 'Unnamed Test';
-				currentTest = {
-					name: fileName,
-					method: method,
-					url: url || '',
-					headers: [],
-					body: ''
-				};
-				inBody = false;
-				bodyLines = [];
-			} else if (currentTest && !inBody && trimmedLine.includes(':') && !trimmedLine.startsWith('{')) {
-				// This is a header line
-				const colonIndex = trimmedLine.indexOf(':');
-				if (colonIndex > 0) {
-					const key = trimmedLine.substring(0, colonIndex).trim();
-					const value = trimmedLine.substring(colonIndex + 1).trim();
-					currentTest.headers.push({ key, value });
-				}
-			} else if (currentTest && (trimmedLine === '' || trimmedLine.startsWith('{'))) {
-				// Empty line or start of JSON body indicates transition to body
-				if (trimmedLine.startsWith('{')) {
-					inBody = true;
-					bodyLines.push(line);
-				} else if (inBody || bodyLines.length > 0) {
-					bodyLines.push(line);
-				} else {
-					inBody = true; // Empty line after headers
-				}
-			} else if (currentTest && inBody) {
-				// We're in the body section
-				bodyLines.push(line);
-			}
-		}
-
-		// Don't forget the last test
-		if (currentTest) {
-			currentTest.body = bodyLines.join('\n').trim();
-			tests.push(currentTest);
-		}
-
-		return tests;
-	}
 
 	// Add all subscriptions
 	context.subscriptions.push(

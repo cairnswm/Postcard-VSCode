@@ -27,6 +27,26 @@ Postcard transforms VS Code into a powerful API testing tool, similar to Postman
 3. Press `Ctrl+Shift+P` and type "Install from VSIX"
 4. Select the downloaded `.vsix` file
 
+### Installing the `.vsix` File
+
+If the extension is not available in the VS Code Marketplace, you can manually install it using the `.vsix` file:
+
+1. **Download the `.vsix` File**:
+   - Visit the [GitHub Releases page](https://github.com/cairnswm/Postcard-VSCode/releases).
+   - Download the latest `.vsix` file for the extension.
+
+2. **Open VS Code**:
+   - Launch Visual Studio Code.
+
+3. **Install the `.vsix` File**:
+   - Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (macOS) to open the Command Palette.
+   - Type `Extensions: Install from VSIX...` and select it.
+   - Navigate to the downloaded `.vsix` file and select it.
+
+4. **Verify Installation**:
+   - After installation, the extension should appear in the Extensions view (`Ctrl+Shift+X`).
+   - Restart VS Code if necessary.
+
 ## � How to Use Postcard
 
 ### Getting Started
@@ -81,6 +101,42 @@ After running a test, the **Test Results** panel shows:
 - `Ctrl+Shift+P` → "Postcard: Add Folder" - Quick folder creation
 - `Ctrl+Shift+P` → "Postcard: Add File" - Quick test creation
 - `Ctrl+Shift+P` → "Postcard: Clear Results" - Clear the results panel
+
+## 📦 Publishing a New Release
+
+To publish a new release of the Postcard extension, follow these steps:
+
+### 1. Update the Version
+1. Open the `package.json` file.
+2. Update the `version` field to the new version number (e.g., `1.0.1`).
+3. Commit the change:
+   ```powershell
+   git add package.json
+   git commit -m "Bump version to v1.0.1"
+   ```
+
+### 2. Create a Git Tag
+1. Create a new tag for the release:
+   ```powershell
+   git tag v1.0.1
+   ```
+2. Push the tag to GitHub:
+   ```powershell
+   git push origin v1.0.1
+   ```
+
+### 3. GitHub Actions Workflow
+- The GitHub Actions workflow will automatically build the extension, create a `.vsix` file, and publish a release on GitHub.
+- You can monitor the progress in the **Actions** tab of the repository.
+
+### 4. Verify the Release
+1. Go to the [GitHub Releases page](https://github.com/cairnswm/Postcard-VSCode/releases).
+2. Ensure the `.vsix` file is attached to the release.
+3. Download and test the `.vsix` file locally to verify it works as expected.
+
+### 5. Announce the Release
+- Share the release notes and `.vsix` file with your team or users.
+- Encourage users to update to the latest version.
 
 ## 🤝 Need Help?
 

@@ -60,6 +60,11 @@
         "icon": "$(file-add)"
       },
       {
+        "command": "postcard.importHttp",
+        "title": "Import .http File",
+        "icon": "$(arrow-up)"
+      },
+      {
         "command": "postcard.openFolder",
         "title": "Open Folder"
       },
@@ -99,6 +104,11 @@
           "command": "postcard.refresh",
           "when": "view == postcard.explorerView",
           "group": "navigation@3"
+        },
+        {
+          "command": "postcard.importHttp",
+          "when": "view == postcard.explorerView",
+          "group": "navigation@4"
         },
         {
           "command": "postcard.clearResults",

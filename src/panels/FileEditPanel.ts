@@ -107,6 +107,14 @@ export class FileEditPanel extends BaseWebviewPanel {
                     <button type="button" id="test-api" class="secondary">Test API</button>
                     <button type="submit">Save Changes</button>
                     <button type="button" id="delete-file" class="danger">🗑️ Delete File</button>
+                    <button type="button" id="export-button" class="secondary">Export</button>
+                </div>
+                <div id="export-panel" class="export-panel" style="display: none;">
+                    <div>
+                        <label><input type="radio" name="export-option" value="download" checked> Download</label>
+                        <label><input type="radio" name="export-option" value="local-save"> Save Locally</label>
+                    </div>
+                    <button type="button" id="export-http" class="secondary">Export Rest Client .http</button>
                 </div>
             </form>
         </div>
@@ -128,6 +136,7 @@ export class FileEditPanel extends BaseWebviewPanel {
     }
 
     protected async handleMessage(message: any): Promise<void> {
+        console.log('FileEditPanel: handleMessage invoked with message:', message);
         await this.messageHandler.handleMessage(message);
     }
 
@@ -345,6 +354,41 @@ export class FileEditPanel extends BaseWebviewPanel {
                     command: 'delete'
                 });
                 console.log('Delete message sent to VS Code');
+            });
+
+            // Add event listener for Export button to toggle export panel visibility
+            addClickListener('export-button', () => {
+                const exportPanel = document.getElementById('export-panel');
+                if (exportPanel) {
+                    exportPanel.style.display = exportPanel.style.display === 'none' ? 'block' : 'none';
+                }
+            });
+
+            // Add event listener for Export HTTP button
+            addClickListener('export-http', () => {
+                const exportPanel = document.getElementById('export-panel');
+                if (exportPanel) {
+                    exportPanel.style.display = 'none';
+                }
+
+                const selectedOption = document.querySelector('input[name="export-option"]:checked')?.value;
+                console.log('Selected export option:', selectedOption);
+
+                const formData = {
+                    method: document.getElementById('method')?.value || '',
+                    url: document.getElementById('url')?.value || '',
+                    headers: headers,
+                    body: document.getElementById('body')?.value || '',
+                    name: document.getElementById('name')?.value || ''
+                };
+
+                console.log('Form data for export:', formData);
+                console.log('Sending export-http command with data:', { command: 'export-http', exportOption: selectedOption, ...formData });
+                vscode.postMessage({
+                    command: 'export-http',
+                    exportOption: selectedOption,
+                    ...formData
+                });
             });
 
             // Event listeners

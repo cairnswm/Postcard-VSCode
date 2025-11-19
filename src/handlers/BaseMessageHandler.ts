@@ -39,6 +39,10 @@ export abstract class BaseMessageHandler<TItem, TUpdate = Partial<TItem>> {
                     console.log('BaseMessageHandler: Routing to handleDeleteMessage');
                     await this.handleDeleteMessage(message);
                     break;
+                case 'export-http':
+                    console.log('BaseMessageHandler: Routing to handleExportHttpMessage');
+                    await this.handleExportHttpMessage(message);
+                    break;
                 default:
                     console.warn('Unknown message command:', message.command);
             }
@@ -100,6 +104,11 @@ export abstract class BaseMessageHandler<TItem, TUpdate = Partial<TItem>> {
     protected async handleDeleteMessage(message: any): Promise<void> {
         // Default implementation - subclasses should override this
         console.warn('Delete command not implemented for this handler');
+    }
+
+    // Base implementation - subclasses can override
+    protected async handleExportHttpMessage(message: any): Promise<void> {
+        console.log('Export HTTP message received:', message);
     }
 
     // Utility methods for common validations

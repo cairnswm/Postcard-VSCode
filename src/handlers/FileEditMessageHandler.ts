@@ -166,4 +166,62 @@ export class FileEditMessageHandler extends BaseMessageHandler<FileItem> {
             this.showErrorMessage(`Failed to delete file: ${error}`);
         }
     }
+
+    protected async handleExportHttpMessage(message: any): Promise<void> {
+        const { method, url, headers, body, name, exportOption } = message;
+        console.log('FileEditMessageHandler: Export process started');
+        console.log('Received data:', { method, url, headers, body, name, exportOption });
+
+        const headerLines = (headers as { key: string; value: string }[]).map(header => `${header.key}: ${header.value}`).join('\n');
+        const httpContent = `${method} ${url}\n${headerLines}\n\n${body}`;
+
+        console.log('Generated HTTP content:', httpContent);
+
+        if (exportOption === 'download') {
+            console.log('User selected download option');
+            const defaultUri = vscode.Uri.file(`${require('os').homedir()}/Downloads/${name}.http`);
+            console.log('Default download location:', defaultUri.fsPath);
+
+            vscode.window.showSaveDialog({
+                defaultUri,
+                filters: { 'HTTP Files': ['http'] },
+                saveLabel: 'Export Rest Client .http'
+            }).then(async fileUri => {
+                if (fileUri) {
+                    console.log('Save dialog returned file URI:', fileUri.fsPath);
+                    console.log('Writing file content:', httpContent);
+                    await vscode.workspace.fs.writeFile(fileUri, Buffer.from(httpContent, 'utf8'));
+                    console.log('File written successfully to:', fileUri.fsPath);
+                    vscode.window.showInformationMessage('Rest Client .http file downloaded successfully!');
+                } else {
+                    console.log('Save dialog cancelled');
+                }
+            });
+        } else if (exportOption === 'local-save') {
+            console.log('User selected local save option');
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            if (workspaceFolders && workspaceFolders.length > 0) {
+                const apitesterFolder = vscode.Uri.joinPath(workspaceFolders[0].uri, '.apitester');
+                const httpFileUri = vscode.Uri.joinPath(apitesterFolder, `${name}.http`);
+
+                console.log('Ensuring .apitester folder exists at:', apitesterFolder.fsPath);
+                console.log('Writing file content:', httpContent);
+                await vscode.workspace.fs.createDirectory(apitesterFolder);
+                await vscode.workspace.fs.writeFile(httpFileUri, Buffer.from(httpContent, 'utf8'));
+                console.log('File written successfully to:', httpFileUri.fsPath);
+
+                console.log('Opening file in editor');
+                const document = await vscode.workspace.openTextDocument(httpFileUri);
+                await vscode.window.showTextDocument(document);
+
+                vscode.window.showInformationMessage(`Rest Client .http file saved to .apitester/${name}.http and opened in the editor.`);
+            } else {
+                console.log('No workspace folder found');
+                vscode.window.showErrorMessage('No workspace folder found to save the .http file.');
+            }
+        } else {
+            console.log('Invalid export option selected');
+        }
+        console.log('Export process completed');
+    }
 }

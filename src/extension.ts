@@ -357,6 +357,122 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('All test results cleared');
 	});
 
+	const importHttpCommand = vscode.commands.registerCommand('postcard.importHttp', async () => {
+		const fileUri = await vscode.window.showOpenDialog({
+			canSelectMany: false,
+			openLabel: 'Import .http File',
+			filters: { 'HTTP Files': ['http'] }
+		});
+
+		if (fileUri && fileUri[0]) {
+			const filePath = fileUri[0].fsPath;
+			const fileContent = await vscode.workspace.fs.readFile(fileUri[0]);
+			const content = fileContent.toString();
+
+			// Parse the .http file content
+			const tests = parseHttpFile(content, filePath);
+
+			// Determine parent folder
+			let parentId: string | undefined;
+			if (currentSelection?.type === 'folder') {
+				parentId = currentSelection.id;
+			} else if (currentSelection?.type === 'file') {
+				parentId = currentSelection.parentId;
+			}
+
+			// Add tests to the current folder and open the first one
+			let firstTest: FileItem | undefined;
+			for (const test of tests) {
+				const newFile = await storage.addFile(test.name, test.url, parentId);
+				
+				// Update the file with parsed data
+				await storage.updateItem(newFile.id, {
+					method: test.method as any,
+					headers: test.headers.map(h => ({ ...h, enabled: true })),
+					body: test.body.trim(),
+					bodyType: test.body.trim() ? 'json' : 'none'
+				} as Partial<FileItem>);
+				
+				if (!firstTest) {
+					firstTest = newFile;
+				}
+			}
+
+			treeDataProvider.refresh();
+
+			// Open the first imported test
+			if (firstTest) {
+				vscode.commands.executeCommand('postcard.openFile', firstTest);
+			}
+		}
+	});
+
+	context.subscriptions.push(importHttpCommand);
+
+	// Function to parse .http file content
+	function parseHttpFile(content: string, filePath: string): { name: string; method: string; url: string; headers: { key: string; value: string }[]; body: string }[] {
+		const lines = content.split(/\r?\n/);
+		const tests: { name: string; method: string; url: string; headers: { key: string; value: string }[]; body: string }[] = [];
+		let currentTest: { name: string; method: string; url: string; headers: { key: string; value: string }[]; body: string } | null = null;
+		let inBody = false;
+		let bodyLines: string[] = [];
+
+		for (const line of lines) {
+			const trimmedLine = line.trim();
+			
+			// Check if this is a new HTTP request
+			if (/^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\s+/.test(trimmedLine)) {
+				// Save previous test if it exists
+				if (currentTest) {
+					currentTest.body = bodyLines.join('\n').trim();
+					tests.push(currentTest);
+				}
+				
+				// Start new test
+				const [method, url] = trimmedLine.split(/\s+/, 2);
+				const fileName = filePath.split(/\\|\//).pop()?.split('.')[0] || 'Unnamed Test';
+				currentTest = {
+					name: fileName,
+					method: method,
+					url: url || '',
+					headers: [],
+					body: ''
+				};
+				inBody = false;
+				bodyLines = [];
+			} else if (currentTest && !inBody && trimmedLine.includes(':') && !trimmedLine.startsWith('{')) {
+				// This is a header line
+				const colonIndex = trimmedLine.indexOf(':');
+				if (colonIndex > 0) {
+					const key = trimmedLine.substring(0, colonIndex).trim();
+					const value = trimmedLine.substring(colonIndex + 1).trim();
+					currentTest.headers.push({ key, value });
+				}
+			} else if (currentTest && (trimmedLine === '' || trimmedLine.startsWith('{'))) {
+				// Empty line or start of JSON body indicates transition to body
+				if (trimmedLine.startsWith('{')) {
+					inBody = true;
+					bodyLines.push(line);
+				} else if (inBody || bodyLines.length > 0) {
+					bodyLines.push(line);
+				} else {
+					inBody = true; // Empty line after headers
+				}
+			} else if (currentTest && inBody) {
+				// We're in the body section
+				bodyLines.push(line);
+			}
+		}
+
+		// Don't forget the last test
+		if (currentTest) {
+			currentTest.body = bodyLines.join('\n').trim();
+			tests.push(currentTest);
+		}
+
+		return tests;
+	}
+
 	// Add all subscriptions
 	context.subscriptions.push(
 		treeView,

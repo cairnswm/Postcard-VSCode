@@ -42,15 +42,13 @@ jobs:
       run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
       
     - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ github.ref }}
-        release_name: Release ${{ steps.get_version.outputs.VERSION }}
+        name: Release ${{ steps.get_version.outputs.VERSION }}
         draft: false
         prerelease: false
+        files: ./postcard-${{ steps.get_version.outputs.VERSION }}.vsix
         body: |
           ## Release ${{ steps.get_version.outputs.VERSION }}
           
@@ -63,13 +61,3 @@ jobs:
           ```
           
           Or use the VS Code Extensions view: `Extensions: Install from VSIX...`
-          
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./postcard-${{ steps.get_version.outputs.VERSION }}.vsix
-        asset_name: postcard-${{ steps.get_version.outputs.VERSION }}.vsix
-        asset_content_type: application/zip

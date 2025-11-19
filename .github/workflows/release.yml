@@ -8,7 +8,9 @@ on:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: write
+      
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -41,14 +43,17 @@ jobs:
       id: get_version
       run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
       
+    - name: List generated files
+      run: ls -la *.vsix
+      
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref }}
         name: Release ${{ steps.get_version.outputs.VERSION }}
         draft: false
         prerelease: false
-        files: ./postcard-${{ steps.get_version.outputs.VERSION }}.vsix
+        files: "*.vsix"
+        generate_release_notes: true
         body: |
           ## Release ${{ steps.get_version.outputs.VERSION }}
           

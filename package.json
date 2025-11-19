@@ -3,6 +3,15 @@
   "displayName": "Postcard",
   "description": "Friendly API testing tool with organized test management",
   "version": "1.0.0",
+  "publisher": "cairnswm",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cairnswm/Postcard-VSCode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cairnswm/Postcard-VSCode/issues"
+  },
+  "homepage": "https://github.com/cairnswm/Postcard-VSCode#readme",
   "engines": {
     "vscode": "^1.105.0"
   },

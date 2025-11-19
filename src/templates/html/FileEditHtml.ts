@@ -63,6 +63,18 @@ export class FileEditHtml {
 	 * @returns The header HTML content
 	 */
 	public static generateHeader(fileName: string): string {
-		return `<h2>Postcard: ${fileName}</h2>`;
+		return `
+			<div class="header-content">
+				<h2>Postcard: ${fileName}</h2>
+				<div class="shortcut-buttons">
+					<button type="button" id="shortcut-test" class="shortcut-btn test-btn" title="Test API">
+						<span class="icon">⚡</span>
+					</button>
+					<button type="button" id="shortcut-save" class="shortcut-btn save-btn" title="Save Changes">
+						<span class="icon">💾</span>
+					</button>
+				</div>
+			</div>
+		`;
 	}
 }

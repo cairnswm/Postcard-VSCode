@@ -203,6 +203,19 @@ export class FileEditScript {
 
 			// Add header button
 			addClickListener('add-header', addHeader);
+
+			// Shortcut buttons
+			addClickListener('shortcut-test', () => {
+				vscode.postMessage({
+					command: 'test',
+					...getFormData()
+				});
+			});
+
+			addClickListener('shortcut-save', () => {
+				// Trigger form submission
+				handleFormSubmit();
+			});
 		`;
 	}
 

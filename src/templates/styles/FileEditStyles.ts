@@ -86,6 +86,84 @@ export class FileEditStyles {
             .method-PATCH { color: #9C27B0; }
             .method-HEAD { color: #607D8B; }
             .method-OPTIONS { color: #795548; }
+
+            /* Header with shortcut buttons */
+            .header-content {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 16px;
+            }
+
+            .header-content h2 {
+                margin: 0;
+                flex-grow: 1;
+            }
+
+            .shortcut-buttons {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+
+            .shortcut-btn {
+                width: 36px;
+                height: 36px;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+                transition: all 0.2s ease;
+                position: relative;
+            }
+
+            .shortcut-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            }
+
+            .shortcut-btn:active {
+                transform: translateY(0);
+            }
+
+            .test-btn {
+                background-color: var(--vscode-button-secondaryBackground);
+                color: var(--vscode-button-secondaryForeground);
+            }
+
+            .test-btn:hover {
+                background-color: var(--vscode-button-secondaryHoverBackground);
+            }
+
+            .save-btn {
+                background-color: var(--vscode-button-background);
+                color: var(--vscode-button-foreground);
+            }
+
+            .save-btn:hover {
+                background-color: var(--vscode-button-hoverBackground);
+            }
+
+            .shortcut-btn .icon {
+                display: block;
+                line-height: 1;
+            }
+
+            /* Responsive design for smaller screens */
+            @media (max-width: 600px) {
+                .header-content {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 12px;
+                }
+
+                .shortcut-buttons {
+                    align-self: flex-end;
+                }
+            }
         `;
     }
 }

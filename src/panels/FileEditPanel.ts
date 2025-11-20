@@ -64,6 +64,7 @@ export class FileEditPanel extends BaseWebviewPanel {
     private onTest?: (test: FileItem) => Promise<void>,
     private onDelete?: () => Promise<void>
   ) {
+    console.log('🚀 FileEditPanel: Constructor called for file:', file.name);
     super(panel, extensionUri);
     this.messageHandler = new FileEditMessageHandler(
       this.file,
@@ -71,6 +72,7 @@ export class FileEditPanel extends BaseWebviewPanel {
       this.onTest,
       this.onDelete
     );
+    console.log('🚀 FileEditPanel: MessageHandler created, calling setupWebview');
     // Setup webview after all properties are initialized
     this.setupWebview();
   }
@@ -82,21 +84,21 @@ export class FileEditPanel extends BaseWebviewPanel {
     onTest?: (test: FileItem) => Promise<void>,
     onDelete?: () => Promise<void>
   ) {
+    console.log('🔄 FileEditPanel: updateContent called for file:', file.name);
     this.file = file;
     this.parentFolder = parentFolder;
     this.onUpdate = onUpdate;
     this.onTest = onTest;
     this.onDelete = onDelete;
 
+    // Update the existing message handler instead of creating a new one
+    console.log('🔄 FileEditPanel: Updating message handler callbacks');
     this.messageHandler.updateCurrentFile(file);
-    this.messageHandler = new FileEditMessageHandler(
-      this.file,
-      this.onUpdate,
-      this.onTest,
-      this.onDelete
-    );
+    this.messageHandler.updateCallbacks(this.onUpdate, this.onTest, this.onDelete);
+    
     this.updateTitle(`📡 ${file.method} ${file.name}`);
-    this.setupWebview(); // This will regenerate the HTML
+    console.log('🔄 FileEditPanel: Calling setupWebview from updateContent');
+    this.setupWebview(); // This will regenerate the HTML but won't duplicate message listeners
   }
 
   protected getHtmlContent(): string {
@@ -121,8 +123,10 @@ export class FileEditPanel extends BaseWebviewPanel {
   }
 
   protected async handleMessage(message: any): Promise<void> {
-    console.log("FileEditPanel: handleMessage invoked with message:", message);
+    console.log("🔥 FileEditPanel: handleMessage invoked with message:", message);
+    console.log("🔥 FileEditPanel: About to call messageHandler.handleMessage");
     await this.messageHandler.handleMessage(message);
+    console.log("🔥 FileEditPanel: messageHandler.handleMessage completed");
   }
 
   public dispose(): void {

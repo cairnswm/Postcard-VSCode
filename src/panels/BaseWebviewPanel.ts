@@ -55,16 +55,28 @@ export abstract class BaseWebviewPanel {
     }
 
     protected setupWebview(): void {
+        console.log('⚙️ BaseWebviewPanel: setupWebview called');
         this.webview.html = this.getHtmlContent();
+        console.log('⚙️ BaseWebviewPanel: HTML content set, calling setupMessageListener');
         this.setupMessageListener();
     }
 
+    private _messageListenerSetup = false;
+
     protected setupMessageListener(): void {
-        this.webview.onDidReceiveMessage(
-            (message) => this.handleMessage(message),
-            null,
-            this._disposables
-        );
+        // Only setup message listener once to prevent duplicates
+        if (!this._messageListenerSetup) {
+            console.log('👂 BaseWebviewPanel: Setting up message listener (first time)');
+            this.webview.onDidReceiveMessage(
+                (message) => this.handleMessage(message),
+                null,
+                this._disposables
+            );
+            this._messageListenerSetup = true;
+            console.log('👂 BaseWebviewPanel: Message listener setup complete');
+        } else {
+            console.log('👂 BaseWebviewPanel: Message listener already setup, skipping');
+        }
     }
 
     protected showSuccessMessage(message: string): void {

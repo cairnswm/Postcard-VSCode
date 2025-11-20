@@ -163,10 +163,12 @@ export class FileEditScript {
 		return `
 			// Test API button
 			addClickListener('test-api', () => {
+				console.log('🖱️ JavaScript: Test API button clicked');
 				vscode.postMessage({
 					command: 'test',
 					...getFormData()
 				});
+				console.log('🖱️ JavaScript: Test message sent to VS Code');
 			});
 
 			// Delete file button
@@ -206,10 +208,12 @@ export class FileEditScript {
 
 			// Shortcut buttons
 			addClickListener('shortcut-test', () => {
+				console.log('🖱️ JavaScript: Shortcut test button clicked');
 				vscode.postMessage({
 					command: 'test',
 					...getFormData()
 				});
+				console.log('🖱️ JavaScript: Shortcut test message sent to VS Code');
 			});
 
 			addClickListener('shortcut-save', () => {

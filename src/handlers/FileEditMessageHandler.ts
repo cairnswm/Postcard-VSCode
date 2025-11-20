@@ -13,6 +13,7 @@ export class FileEditMessageHandler extends BaseMessageHandler<FileItem> {
         private onTest?: (test: FileItem) => Promise<void>,
         private onDelete?: () => Promise<void>
     ) {
+        console.log('🛠️ FileEditMessageHandler: Constructor called for file:', currentFile.name);
         super(onUpdate, {
             successMessage: 'Postcard test updated successfully!',
             errorMessagePrefix: 'Failed to update Postcard test'
@@ -102,18 +103,23 @@ export class FileEditMessageHandler extends BaseMessageHandler<FileItem> {
     }
 
     protected async handleTestMessage(message: any): Promise<void> {
+        console.log('🧪 FileEditMessageHandler: handleTestMessage called for:', this.currentFile.name);
         if (!this.onTest) {
+            console.log('🧪 FileEditMessageHandler: No onTest callback, returning');
             return;
         }
 
+        console.log('🧪 FileEditMessageHandler: Validating test data');
         // Validate test data
         const validationResult = this.validateSaveData(message);
         if (!validationResult.isValid) {
+            console.log('🧪 FileEditMessageHandler: Validation failed:', validationResult.error);
             this.showErrorMessage(`Cannot run test: ${validationResult.error}`);
             return;
         }
 
         try {
+            console.log('🧪 FileEditMessageHandler: Creating test object');
             // Create test object with current form data
             const testData: FileItem = {
                 ...this.currentFile,
@@ -126,8 +132,11 @@ export class FileEditMessageHandler extends BaseMessageHandler<FileItem> {
                 description: this.sanitizeString(message.description || '')
             };
 
+            console.log('🧪 FileEditMessageHandler: Calling onTest callback');
             await this.onTest(testData);
+            console.log('🧪 FileEditMessageHandler: onTest callback completed');
         } catch (error) {
+            console.log('🧪 FileEditMessageHandler: Test failed with error:', error);
             this.showErrorMessage(`Failed to run Postcard test: ${error}`);
         }
     }
@@ -138,6 +147,18 @@ export class FileEditMessageHandler extends BaseMessageHandler<FileItem> {
 
     public getCurrentFile(): FileItem {
         return this.currentFile;
+    }
+
+    public updateCallbacks(
+        onUpdate: (updates: Partial<FileItem>) => Promise<void>,
+        onTest?: (test: FileItem) => Promise<void>,
+        onDelete?: () => Promise<void>
+    ): void {
+        console.log('🔄 FileEditMessageHandler: updateCallbacks called for:', this.currentFile.name);
+        this.onUpdate = onUpdate;
+        this.onTest = onTest;
+        this.onDelete = onDelete;
+        console.log('🔄 FileEditMessageHandler: Callbacks updated');
     }
 
     protected async handleDeleteMessage(message: any): Promise<void> {

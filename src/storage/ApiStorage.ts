@@ -127,6 +127,24 @@ export class ApiStorage {
         }
     }
 
+    async duplicateFile(id: string): Promise<FileItem | null> {
+        const originalItem = this.items.get(id);
+        if (!originalItem || originalItem.type !== 'file') {
+            return null;
+        }
+
+        const originalFile = originalItem as FileItem;
+        const duplicatedFile: FileItem = {
+            ...originalFile,
+            id: this.generateId(),
+            name: `${originalFile.name} (Copy)`
+        };
+
+        this.items.set(duplicatedFile.id, duplicatedFile);
+        await this.saveData();
+        return duplicatedFile;
+    }
+
     async deleteItem(id: string): Promise<void> {
         console.log(`Storage: deleteItem called for ID: ${id}`);
         // Delete the item and all its children recursively

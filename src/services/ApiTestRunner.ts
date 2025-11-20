@@ -15,6 +15,7 @@ export class ApiTestRunner {
 	 * @param test The file item containing the test configuration
 	 */
 	public async runTest(test: FileItem): Promise<void> {
+		console.log('🚀 ApiTestRunner: runTest called for:', test.name);
 		// Focus the results panel
 		ApiTestResultsProvider.createOrShow();
 		

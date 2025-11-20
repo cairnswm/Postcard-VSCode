@@ -147,12 +147,15 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 		}
 
+		console.log('📂 Extension: Creating FileEditPanel for item:', item.name);
 		FileEditPanel.createOrShow(context.extensionUri, item, parentFolder, async (updates: Partial<FileItem>) => {
+			console.log('📂 Extension: Update callback called for:', item.name);
 			// Use the current file's ID from the panel, not the original item.id
 			const currentFileId = FileEditPanel.currentPanel?.messageHandler.getCurrentFile().id || item.id;
 			await storage.updateItem(currentFileId, updates);
 			treeDataProvider.refresh();
 		}, async (testData: FileItem) => {
+			console.log('📂 Extension: Test callback called for:', testData.name);
 			await apiTestRunner.runTest(testData);
 		}, async () => {
 			// Delete the current file
@@ -191,6 +194,25 @@ export async function activate(context: vscode.ExtensionContext) {
 	const clearResultsCommand = vscode.commands.registerCommand('postcard.clearResults', () => {
 		ApiTestResultsProvider.clearAllResults(resultsProvider);
 		vscode.window.showInformationMessage('All test results cleared');
+	});
+
+	const duplicateFileCommand = vscode.commands.registerCommand('postcard.duplicateFile', async (item: FileItem) => {
+		try {
+			const duplicatedFile = await storage.duplicateFile(item.id);
+			if (duplicatedFile) {
+				treeDataProvider.refresh();
+				vscode.window.showInformationMessage(`Test "${item.name}" duplicated successfully`);
+				
+				// Optionally reveal and select the duplicated file
+				setTimeout(() => {
+					treeView.reveal(duplicatedFile, { select: true, focus: false, expand: false });
+				}, 200);
+			} else {
+				vscode.window.showErrorMessage('Failed to duplicate test: Item not found or not a file');
+			}
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to duplicate test: ${error}`);
+		}
 	});
 
 	const importHttpCommand = vscode.commands.registerCommand('postcard.importHttp', async () => {
@@ -256,7 +278,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		openFileCommand,
 		deleteItemCommand,
 		refreshCommand,
-		clearResultsCommand
+		clearResultsCommand,
+		duplicateFileCommand
 	);
 }
 

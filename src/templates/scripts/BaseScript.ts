@@ -127,7 +127,10 @@ export class BaseScript {
         function addClickListener(elementId, callback) {
             const element = document.getElementById(elementId);
             if (element) {
+                console.log('📎 BaseScript: Adding click listener to element:', elementId);
                 element.addEventListener('click', callback);
+            } else {
+                console.log('📎 BaseScript: Element not found for click listener:', elementId);
             }
         }
         

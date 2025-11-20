@@ -95,6 +95,11 @@
         "command": "postcard.clearResults",
         "title": "Clear All Results",
         "icon": "$(clear-all)"
+      },
+      {
+        "command": "postcard.duplicateFile",
+        "title": "Duplicate Test",
+        "icon": "$(copy)"
       }
     ],
     "menus": {
@@ -135,6 +140,11 @@
           "command": "postcard.addFile",
           "when": "view == postcard.explorerView && viewItem == folder",
           "group": "1_add@2"
+        },
+        {
+          "command": "postcard.duplicateFile",
+          "when": "view == postcard.explorerView && viewItem == file",
+          "group": "2_copy@1"
         },
         {
           "command": "postcard.deleteItem",

@@ -12,7 +12,7 @@ export interface ExportData {
 }
 
 export interface ExportOptions {
-	type: 'download' | 'local-save';
+	type: 'download' | 'local-save' | 'clipboard';
 }
 
 export class HttpFileExporter {
@@ -30,6 +30,9 @@ export class HttpFileExporter {
 				break;
 			case 'local-save':
 				await this.exportToLocalSave(data, httpContent);
+				break;
+			case 'clipboard':
+				await this.exportToClipboard(httpContent);
 				break;
 			default:
 				throw new Error(`Unsupported export type: ${options.type}`);
@@ -84,6 +87,15 @@ export class HttpFileExporter {
 		await vscode.window.showTextDocument(document);
 
 		vscode.window.showInformationMessage(`Rest Client .http file saved to ${Config.PATHS.APITESTER_FOLDER}/${data.name}${Config.FILE_EXTENSIONS.HTTP} and opened in the editor.`);
+	}
+
+	/**
+	 * Exports HTTP file content to the system clipboard
+	 * @param httpContent The generated HTTP content
+	 */
+	public static async exportToClipboard(httpContent: string): Promise<void> {
+		await vscode.env.clipboard.writeText(httpContent);
+		vscode.window.showInformationMessage('Rest Client .http content copied to clipboard!');
 	}
 
 	/**

@@ -194,7 +194,7 @@ export class FileEditMessageHandler extends BaseMessageHandler<FileItem> {
             }
 
             // Perform export based on option
-            const exportOptions = { type: exportOption as 'download' | 'local-save' };
+            const exportOptions = { type: exportOption as 'download' | 'local-save' | 'clipboard' };
             await HttpFileExporter.export(exportData, exportOptions);
             
             this.logger.info('Export completed successfully');

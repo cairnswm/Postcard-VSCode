@@ -170,6 +170,7 @@ export class FileEditForm {
 				<div>
 					<label><input type="radio" name="export-option" value="download" checked> Download</label>
 					<label><input type="radio" name="export-option" value="local-save"> Save Locally</label>
+					<label><input type="radio" name="export-option" value="clipboard"> Clipboard</label>
 				</div>
 				<button type="button" id="export-http" class="secondary">Export Rest Client .http</button>
 			</div>

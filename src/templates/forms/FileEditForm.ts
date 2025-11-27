@@ -167,12 +167,23 @@ export class FileEditForm {
 				<button type="button" id="export-button" class="secondary">Export</button>
 			</div>
 			<div id="export-panel" class="export-panel" style="display: none;">
-				<div>
-					<label><input type="radio" name="export-option" value="download" checked> Download</label>
-					<label><input type="radio" name="export-option" value="local-save"> Save Locally</label>
-					<label><input type="radio" name="export-option" value="clipboard"> Clipboard</label>
+				<div class="export-options">
+					<div class="export-option">
+						<input type="radio" name="export-option" value="download" id="export-download" checked>
+						<label for="export-download">Download</label>
+					</div>
+					<div class="export-option">
+						<input type="radio" name="export-option" value="local-save" id="export-local">
+						<label for="export-local">Save Locally</label>
+					</div>
+					<div class="export-option">
+						<input type="radio" name="export-option" value="clipboard" id="export-clipboard">
+						<label for="export-clipboard">Clipboard</label>
+					</div>
 				</div>
-				<button type="button" id="export-http" class="secondary">Export Rest Client .http</button>
+				<div class="export-actions">
+					<button type="button" id="export-http" class="secondary">Export Rest Client .http</button>
+				</div>
 			</div>
 		`;
 	}

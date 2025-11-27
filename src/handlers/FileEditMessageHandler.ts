@@ -3,12 +3,14 @@ import { BaseMessageHandler } from './BaseMessageHandler';
 import { FileItem, FolderItem } from '../models/ApiTreeItem';
 import { Logger } from '../utils/Logger';
 import { HttpFileExporter, ExportData } from '../services/HttpFileExporter';
+import { UrlHelper } from '../utils/UrlHelper';
 
 export class FileEditMessageHandler extends BaseMessageHandler<FileItem> {
     private readonly logger = Logger.create('FileEditMessageHandler');
 
     constructor(
         private currentFile: FileItem,
+        private parentFolder: FolderItem | undefined,
         onUpdate: (updates: Partial<FileItem>) => Promise<void>,
         private onTest?: (test: FileItem) => Promise<void>,
         private onDelete?: () => Promise<void>
@@ -145,6 +147,10 @@ export class FileEditMessageHandler extends BaseMessageHandler<FileItem> {
         this.currentFile = file;
     }
 
+    public updateParentFolder(parentFolder: FolderItem | undefined): void {
+        this.parentFolder = parentFolder;
+    }
+
     public getCurrentFile(): FileItem {
         return this.currentFile;
     }
@@ -197,11 +203,15 @@ export class FileEditMessageHandler extends BaseMessageHandler<FileItem> {
         this.logger.info('Export process started', { name, method, exportOption });
 
         try {
+            // Combine baseUrl with endpoint URL to get full URL
+            const baseUrl = this.parentFolder?.baseUrl || '';
+            const fullUrl = UrlHelper.combineUrls(baseUrl, url);
+            
             // Prepare export data
             const exportData: ExportData = {
                 name: name || 'untitled',
                 method,
-                url,
+                url: fullUrl,
                 headers: headers || [],
                 body: body || ''
             };

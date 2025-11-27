@@ -68,6 +68,7 @@ export class FileEditPanel extends BaseWebviewPanel {
     super(panel, extensionUri);
     this.messageHandler = new FileEditMessageHandler(
       this.file,
+      this.parentFolder,
       this.onUpdate,
       this.onTest,
       this.onDelete
@@ -94,6 +95,7 @@ export class FileEditPanel extends BaseWebviewPanel {
     // Update the existing message handler instead of creating a new one
     console.log('🔄 FileEditPanel: Updating message handler callbacks');
     this.messageHandler.updateCurrentFile(file);
+    this.messageHandler.updateParentFolder(parentFolder);
     this.messageHandler.updateCallbacks(this.onUpdate, this.onTest, this.onDelete);
     
     this.updateTitle(`📡 ${file.method} ${file.name}`);

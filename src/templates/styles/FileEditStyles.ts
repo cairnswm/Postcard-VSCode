@@ -152,6 +152,80 @@ export class FileEditStyles {
                 line-height: 1;
             }
 
+            /* Export Panel Styles */
+            .export-panel {
+                border: 1px solid var(--vscode-input-border);
+                border-radius: 4px;
+                background-color: var(--vscode-input-background);
+                padding: 16px;
+                margin-top: 12px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .export-options {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                margin-bottom: 16px;
+            }
+
+            .export-option {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 6px 8px;
+                border-radius: 3px;
+                transition: background-color 0.2s ease;
+            }
+
+            .export-option:hover {
+                background-color: var(--vscode-list-hoverBackground);
+            }
+
+            .export-option input[type="radio"] {
+                margin: 0;
+                width: 16px;
+                height: 16px;
+                cursor: pointer;
+            }
+
+            .export-option label {
+                margin: 0;
+                cursor: pointer;
+                color: var(--vscode-foreground);
+                font-size: 14px;
+                user-select: none;
+                flex: 1;
+            }
+
+            .export-actions {
+                border-top: 1px solid var(--vscode-input-border);
+                padding-top: 12px;
+            }
+
+            .export-actions button {
+                width: 100%;
+                padding: 10px 16px;
+                font-weight: 500;
+                border-radius: 4px;
+                transition: all 0.2s ease;
+                background-color: var(--vscode-button-background);
+                color: var(--vscode-button-foreground);
+                border: 1px solid var(--vscode-button-background);
+            }
+
+            .export-actions button:hover {
+                background-color: var(--vscode-button-hoverBackground);
+                border-color: var(--vscode-button-hoverBackground);
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+
+            .export-actions button:active {
+                transform: translateY(0);
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            }
+
             /* Responsive design for smaller screens */
             @media (max-width: 600px) {
                 .header-content {
@@ -162,6 +236,14 @@ export class FileEditStyles {
 
                 .shortcut-buttons {
                     align-self: flex-end;
+                }
+
+                .export-options {
+                    gap: 4px;
+                }
+
+                .export-option {
+                    padding: 4px 6px;
                 }
             }
         `;

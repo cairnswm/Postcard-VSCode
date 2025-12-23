@@ -15,8 +15,8 @@ export class FileEditHtml {
 	 * @param config Configuration object containing all HTML sections
 	 * @returns The complete HTML document as a string
 	 */
-	public static generate(config: FileEditHtmlConfig): string {
-		return `<!DOCTYPE html>
+	public static generate(config: FileEditHtmlConfig): string { 
+		return /* HTML */ `<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
@@ -63,7 +63,7 @@ export class FileEditHtml {
 	 * @returns The header HTML content
 	 */
 	public static generateHeader(fileName: string): string {
-		return `
+		return /* HTML */ `
 			<div class="header-content">
 				<h2>Postcard: ${fileName}</h2>
 				<div class="shortcut-buttons">

@@ -39,7 +39,7 @@ export class Config {
 	 * File and directory paths
 	 */
 	public static readonly PATHS = {
-		APITESTER_FOLDER: '.apitester',
+		APITESTER_FOLDER: '.postcard',
 		DOWNLOADS_FOLDER: 'Downloads'
 	} as const;
 

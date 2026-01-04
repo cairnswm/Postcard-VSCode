@@ -16,7 +16,7 @@ export interface FileItem extends ApiItem {
     type: 'file';
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
     url: string;
-    headers: { key: string; value: string; enabled: boolean }[];
+    headers: { key: string; value: string; enabled: boolean; sensitive?: boolean }[];
     bodyType: 'none' | 'json' | 'form' | 'text' | 'xml' | 'binary';
     body: string;
     description?: string;

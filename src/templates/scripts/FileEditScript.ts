@@ -1,7 +1,7 @@
 import { BaseScript } from './BaseScript';
 
 export interface FileEditScriptConfig {
-	headers: { key: string; value: string; enabled: boolean }[];
+	headers: { key: string; value: string; enabled: boolean; sensitive?: boolean }[];
 	baseUrl?: string;
 }
 
@@ -69,6 +69,9 @@ export class FileEditScript {
 						<input type="checkbox" class="header-checkbox" \${header.enabled ? 'checked' : ''} onchange="toggleHeader(\${index})">
 						<input type="text" placeholder="Header name" value="\${header.key}" onchange="updateHeaderKey(\${index}, this.value)">
 						<input type="text" placeholder="Header value" value="\${header.value}" onchange="updateHeaderValue(\${index}, this.value)">
+						<label class="sensitive-label">
+							<input type="checkbox" class="header-sensitive" \${header.sensitive ? 'checked' : ''} onchange="toggleSensitive(\${index})"> Sensitive
+						</label>
 						<button type="button" onclick="removeHeader(\${index})" class="secondary">×</button>
 					\`;
 					return row;
@@ -76,7 +79,7 @@ export class FileEditScript {
 			}
 
 			function addHeader() {
-				addArrayItem(headers, { key: '', value: '', enabled: true });
+				addArrayItem(headers, { key: '', value: '', enabled: true, sensitive: false });
 				renderHeaders();
 			}
 
@@ -87,6 +90,10 @@ export class FileEditScript {
 
 			function toggleHeader(index) {
 				updateArrayItem(headers, index, { enabled: !headers[index].enabled });
+			}
+
+			function toggleSensitive(index) {
+				updateArrayItem(headers, index, { sensitive: !headers[index].sensitive });
 			}
 
 			function updateHeaderKey(index, value) {

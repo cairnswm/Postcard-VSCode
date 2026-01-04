@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Postcard tests.json schema",
+  "description": "Schema describing the structure of the Postcard tests.json storage file (an array of Api items).",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "oneOf": [
+      {
+        "title": "FolderItem",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "type": { "const": "folder" },
+          "parentId": { "type": ["string", "null"] },
+          "baseUrl": { "type": "string" }
+        },
+        "required": ["id", "name", "type", "baseUrl"],
+        "additionalProperties": false
+      },
+      {
+        "title": "FileItem",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "type": { "const": "file" },
+          "parentId": { "type": ["string", "null"] },
+          "method": {
+            "type": "string",
+            "enum": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
+          },
+          "url": { "type": "string" },
+          "headers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": { "type": "string" },
+                "value": { "type": "string" },
+                "enabled": { "type": "boolean" },
+                "sensitive": { "type": "boolean" }
+              },
+              "required": ["key", "value", "enabled"],
+              "additionalProperties": false
+            }
+          },
+          "bodyType": { "type": "string", "enum": ["none", "json", "form", "text", "xml", "binary"] },
+          "body": { "type": "string" },
+          "description": { "type": "string" }
+        },
+        "required": ["id", "name", "type", "method", "url", "headers", "bodyType", "body"],
+        "additionalProperties": false
+      }
+    ]
+  }
+}

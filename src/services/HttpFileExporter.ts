@@ -7,7 +7,7 @@ export interface ExportData {
 	name: string;
 	method: string;
 	url: string;
-	headers: { key: string; value: string }[];
+	headers: { key: string; value: string; sensitive?: boolean }[];
 	body: string;
 }
 

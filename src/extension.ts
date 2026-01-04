@@ -10,7 +10,8 @@ import { HttpFileParser } from './utils/HttpFileParser';
 import { Config } from './config/Constants';
 
 export async function activate(context: vscode.ExtensionContext) {
-	console.log('Postcard extension is now active!');
+	const outputChannel = vscode.window.createOutputChannel('Postcard');
+	outputChannel.appendLine('Postcard extension is now active! (entering activate)');
 
 	// Check if we have a workspace
 	if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
@@ -19,9 +20,22 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	// Initialize storage and tree data provider
-	const storage = new ApiStorage();
-	await storage.initialize();
+	outputChannel.appendLine('Postcard: creating ApiStorage instance');
+	const storage = new ApiStorage(outputChannel);
+	// Create the tree data provider immediately so the view can be registered
 	const treeDataProvider = new ApiTreeDataProvider(storage);
+
+	// Initialize storage in the background to avoid blocking extension activation
+	outputChannel.appendLine('Postcard: scheduling storage.initialize() in background');
+	storage.initialize()
+		.then(() => {
+			outputChannel.appendLine(`Postcard: storage.initialize() completed; items=${storage.getChildren().length}`);
+			// Refresh the tree after initialization completes
+			treeDataProvider.refresh();
+		})
+		.catch(error => {
+			outputChannel.appendLine(`Postcard: storage.initialize() failed: ${String(error)}`);
+		});
 	
 	// Register the results panel provider
 	const resultsProvider = new ApiTestResultsProvider(context.extensionUri);
@@ -124,13 +138,13 @@ export async function activate(context: vscode.ExtensionContext) {
 			treeDataProvider.refresh();
 		}, async () => {
 			// Delete the folder
-			console.log(`Extension: Deleting folder with ID: ${item.id}`);
+			outputChannel.appendLine(`Extension: Deleting folder with ID: ${item.id}`);
 			await storage.deleteItem(item.id);
-			console.log('Extension: Folder deleted, refreshing tree');
+			outputChannel.appendLine('Extension: Folder deleted, refreshing tree');
 			treeDataProvider.refresh();
 			// Close the panel after deletion
 			FolderEditPanel.currentPanel?.dispose();
-			console.log('Extension: Panel disposed');
+			outputChannel.appendLine('Extension: Panel disposed');
 		});
 	});
 
@@ -147,26 +161,26 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 		}
 
-		console.log('📂 Extension: Creating FileEditPanel for item:', item.name);
+		outputChannel.appendLine(`📂 Extension: Creating FileEditPanel for item: ${item.name}`);
 		FileEditPanel.createOrShow(context.extensionUri, item, parentFolder, async (updates: Partial<FileItem>) => {
-			console.log('📂 Extension: Update callback called for:', item.name);
+			outputChannel.appendLine(`📂 Extension: Update callback called for: ${item.name}`);
 			// Use the current file's ID from the panel, not the original item.id
 			const currentFileId = FileEditPanel.currentPanel?.messageHandler.getCurrentFile().id || item.id;
 			await storage.updateItem(currentFileId, updates);
 			treeDataProvider.refresh();
 		}, async (testData: FileItem) => {
-			console.log('📂 Extension: Test callback called for:', testData.name);
+			outputChannel.appendLine(`📂 Extension: Test callback called for: ${testData.name}`);
 			await apiTestRunner.runTest(testData);
 		}, async () => {
 			// Delete the current file
 			const currentFileId = FileEditPanel.currentPanel?.messageHandler.getCurrentFile().id || item.id;
-			console.log(`Extension: Deleting file with ID: ${currentFileId}`);
+			outputChannel.appendLine(`Extension: Deleting file with ID: ${currentFileId}`);
 			await storage.deleteItem(currentFileId);
-			console.log('Extension: File deleted, refreshing tree');
+			outputChannel.appendLine('Extension: File deleted, refreshing tree');
 			treeDataProvider.refresh();
 			// Close the panel after deletion
 			FileEditPanel.currentPanel?.dispose();
-			console.log('Extension: Panel disposed');
+			outputChannel.appendLine('Extension: Panel disposed');
 		});
 	});
 
@@ -185,10 +199,19 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	const refreshCommand = vscode.commands.registerCommand('postcard.refresh', async () => {
-		console.log('Manual refresh triggered');
-		await storage.initialize();
-		treeDataProvider.refresh();
-		vscode.window.showInformationMessage('Postcard data refreshed');
+		outputChannel.appendLine('postcard.refresh: invoked by user');
+		try {
+			outputChannel.appendLine('postcard.refresh: calling storage.initialize()');
+			await storage.initialize();
+			const rootChildren = storage.getChildren();
+			outputChannel.appendLine(`postcard.refresh: storage.initialize() completed - root children count=${rootChildren.length}`);
+			outputChannel.appendLine('postcard.refresh: refreshing tree view');
+			treeDataProvider.refresh();
+			vscode.window.showInformationMessage('Postcard data refreshed');
+		} catch (error) {
+			outputChannel.appendLine(`postcard.refresh: refresh failed: ${String(error)}`);
+			vscode.window.showErrorMessage(`Postcard refresh failed: ${error}`);
+		}
 	});
 
 	const clearResultsCommand = vscode.commands.registerCommand('postcard.clearResults', () => {
